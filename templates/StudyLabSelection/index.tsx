@@ -150,7 +150,11 @@ const StudyLabSelection = () => {
                                 <AccordionItem
                                     key={course.id}
                                     value={course.id}
-                                    className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm px-5 border-b-0"
+                                    className={cn(
+                                        "bg-white rounded-2xl overflow-hidden px-5 border border-transparent transition-all",
+                                        "data-[state=open]:border-gray-100 data-[state=open]:shadow-sm",
+                                        (course.modules.length > 0 && course.modules.every(m => selectedModules.includes(m.id))) && "border-gray-100 shadow-sm"
+                                    )}
                                 >
                                     <div className="flex items-center gap-4">
                                         <Checkbox
@@ -182,7 +186,7 @@ const StudyLabSelection = () => {
                                                 <Label
                                                     key={module.id}
                                                     htmlFor={module.id}
-                                                    className="flex items-start gap-3 rounded-lg border p-3 transition-all hover:bg-gray-25/50 has-[[aria-checked=true]]:border-gray-100 has-[[aria-checked=true]]:bg-gray-25"
+                                                    className="flex items-start gap-3 rounded-lg border border-transparent p-3 transition-all hover:bg-gray-25/50 has-[[aria-checked=true]]:border-gray-100 has-[[aria-checked=true]]:bg-gray-25"
                                                 >
                                                     <Checkbox
                                                         id={module.id}

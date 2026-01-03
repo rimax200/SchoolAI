@@ -16,6 +16,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
     Accordion,
     AccordionContent,
@@ -153,6 +154,7 @@ const StudyLabSelection = () => {
                                 >
                                     <div className="flex items-center gap-4">
                                         <Checkbox
+                                            id={`course-${course.id}`}
                                             checked={course.modules.length > 0 && course.modules.every(m => selectedModules.includes(m.id))}
                                             onCheckedChange={(checked) => {
                                                 const moduleIds = course.modules.map(m => m.id);
@@ -164,37 +166,39 @@ const StudyLabSelection = () => {
                                             }}
                                         />
                                         <AccordionTrigger className="hover:no-underline flex-grow py-5">
-                                            <div className="flex flex-col items-start text-left">
+                                            <Label htmlFor={`course-${course.id}`} className="flex flex-col items-start text-left cursor-pointer">
                                                 <h3 className="font-bold text-gray-900">{course.title}</h3>
                                                 <div className="flex items-center gap-4 mt-1 text-xs text-gray-500">
                                                     <span className="flex items-center gap-1"><Folder className="w-3 h-3" /> {course.modulesCount} Modules</span>
                                                     <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Updated {course.updated}</span>
                                                 </div>
-                                            </div>
+                                            </Label>
                                         </AccordionTrigger>
                                     </div>
 
                                     {course.modules.length > 0 && (
                                         <AccordionContent className="pl-12 pb-5 space-y-3">
                                             {course.modules.map(module => (
-                                                <div
+                                                <Label
                                                     key={module.id}
-                                                    className="flex items-center gap-4 cursor-pointer group"
-                                                    onClick={() => toggleModule(module.id)}
+                                                    htmlFor={module.id}
+                                                    className="flex items-start gap-4 p-3 rounded-lg border border-transparent hover:border-gray-100 font-normal transition-all has-[[aria-checked=true]]:bg-gray-25"
                                                 >
                                                     <Checkbox
+                                                        id={module.id}
                                                         checked={selectedModules.includes(module.id)}
                                                         onCheckedChange={() => toggleModule(module.id)}
+                                                        className="mt-0.5"
                                                     />
-                                                    <div>
-                                                        <div className="text-sm font-bold text-gray-900 group-hover:text-primary-200 transition-colors">
+                                                    <div className="grid gap-1">
+                                                        <span className="text-sm font-bold text-gray-900 leading-none">
                                                             {module.title}
-                                                        </div>
-                                                        <div className="text-xs text-gray-500 leading-none mt-1">
+                                                        </span>
+                                                        <span className="text-xs text-gray-500 leading-none">
                                                             {module.topics} Topics • {module.duration} mins
-                                                        </div>
+                                                        </span>
                                                     </div>
-                                                </div>
+                                                </Label>
                                             ))}
                                         </AccordionContent>
                                     )}

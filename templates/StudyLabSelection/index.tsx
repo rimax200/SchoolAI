@@ -182,7 +182,7 @@ const StudyLabSelection = () => {
                                                 <Label
                                                     key={module.id}
                                                     htmlFor={module.id}
-                                                    className="flex items-start gap-4 p-3 rounded-lg border border-transparent hover:border-gray-100 font-normal transition-all has-[[aria-checked=true]]:bg-gray-25"
+                                                    className="flex items-start gap-3 rounded-lg border p-3 transition-all hover:bg-gray-25/50 has-[[aria-checked=true]]:border-gray-100 has-[[aria-checked=true]]:bg-gray-25"
                                                 >
                                                     <Checkbox
                                                         id={module.id}
@@ -190,13 +190,13 @@ const StudyLabSelection = () => {
                                                         onCheckedChange={() => toggleModule(module.id)}
                                                         className="mt-0.5"
                                                     />
-                                                    <div className="grid gap-1">
-                                                        <span className="text-sm font-bold text-gray-900 leading-none">
+                                                    <div className="grid gap-1.5 font-normal">
+                                                        <p className="text-sm leading-none font-medium text-gray-900">
                                                             {module.title}
-                                                        </span>
-                                                        <span className="text-xs text-gray-500 leading-none">
+                                                        </p>
+                                                        <p className="text-gray-500 text-sm">
                                                             {module.topics} Topics • {module.duration} mins
-                                                        </span>
+                                                        </p>
                                                     </div>
                                                 </Label>
                                             ))}

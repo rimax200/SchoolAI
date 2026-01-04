@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useInView } from "framer-motion";
 import {
     Search,
     Filter,
@@ -22,6 +22,8 @@ import {
     LucideIcon
 } from "lucide-react";
 
+import { Course, Module, COURSES } from "@/constants/study";
+
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -30,66 +32,46 @@ import { cn } from "@/lib/utils";
 import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-// --- Types ---
-
-interface Module {
-    id: string;
-    title: string;
-    topics: number;
-    duration: number;
-}
-
-interface Course {
-    id: string;
-    title: string;
-    modulesCount: number;
-    updated: string;
-    modules: Module[];
-    icon?: LucideIcon;
-    description?: string;
-}
-
 // --- Icons ---
 
+const GeminiIcon = ({ className }: { className?: string }) => (
+    <img src="/icons/gemini.png" alt="Gemini" className={cn("object-contain", className)} />
+);
 
-// --- Mock Data ---
+const TypingText = ({ text, delay = 0.03 }: { text: string, delay?: number }) => {
+    const [displayedText, setDisplayedText] = useState("");
+    const ref = useRef(null);
+    const isInView = useInView(ref, { once: true, amount: 0.5 });
+    const [isComplete, setIsComplete] = useState(false);
 
-const COURSES: Course[] = [
-    {
-        id: "psychology",
-        title: "Introduction to Psychology",
-        description: "Explore the human mind, behavior, and cognitive processes.",
-        modulesCount: 3,
-        updated: "2 days ago",
-        modules: [
-            { id: "mod-1", title: "Cognitive Basics", topics: 24, duration: 15 },
-            { id: "mod-2", title: "Behavioral Patterns", topics: 18, duration: 12 },
-            { id: "mod-3", title: "Neural Networks", topics: 32, duration: 25 },
-        ]
-    },
-    {
-        id: "history",
-        title: "European History: 1900-1950",
-        description: "A deep dive into the political and social shifts of the 20th century.",
-        modulesCount: 8,
-        updated: "1 week ago",
-        modules: [
-            { id: "mod-4", title: "The Great War", topics: 45, duration: 30 },
-            { id: "mod-5", title: "Interwar Period", topics: 20, duration: 15 },
-        ]
-    },
-    {
-        id: "chemistry",
-        title: "Advanced Organic Chemistry",
-        description: "Advanced study of carbon-based molecules and their reactions.",
-        modulesCount: 12,
-        updated: "yesterday",
-        modules: [
-            { id: "mod-6", title: "Carbon Compounds", topics: 50, duration: 45 },
-            { id: "mod-7", title: "Reaction Mechanisms", topics: 35, duration: 40 },
-        ]
-    }
-];
+    useEffect(() => {
+        if (isInView) {
+            let i = 0;
+            const timer = setInterval(() => {
+                setDisplayedText(text.slice(0, i));
+                i++;
+                if (i > text.length) {
+                    clearInterval(timer);
+                    setIsComplete(true);
+                }
+            }, delay * 1000);
+            return () => clearInterval(timer);
+        }
+    }, [isInView, text, delay]);
+
+    return (
+        <span ref={ref} className="relative">
+            {displayedText}
+            {!isComplete && (
+                <motion.span
+                    animate={{ opacity: [1, 0, 1] }}
+                    transition={{ duration: 0.8, repeat: Infinity, times: [0, 0.5, 1] }}
+                    className="inline-block w-[2px] h-[14px] bg-white ml-0.5 align-middle"
+                />
+            )}
+        </span>
+    );
+};
 
 // --- Main Component ---
 
@@ -340,16 +322,16 @@ const StudyLabSelection = () => {
                                 <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between w-full">
                                     <div className="flex flex-col gap-3">
                                         <div className="flex items-center gap-2">
-                                            <img src="/icons/gemini.png" alt="Gemini" className="w-5 h-5 object-contain" />
-                                            <h3 className="font-bold text-lg font-sans">AI Recommended</h3>
+                                            <GeminiIcon className="w-5 h-5" />
+                                            <h3 className="font-bold text-base font-sans">AI Recommended</h3>
                                         </div>
-                                        <p className="text-sm text-gray-400 leading-relaxed font-sans font-medium max-w-[600px]">
-                                            We suggest starting with <span className="text-white font-semibold">Neural Networks</span>. This topic has been highlighted as a key area for your current learning path.
+                                        <p className="text-[13px] text-gray-400 leading-relaxed font-sans font-medium max-w-[600px] min-h-[40px]">
+                                            <TypingText text="We suggest starting with Neural Networks. This topic has been highlighted as a key area for your current learning path." />
                                         </p>
                                     </div>
                                     <button
                                         onClick={() => toggleModule("mod-3")}
-                                        className="h-10 px-6 rounded-xl bg-white text-gray-900 font-bold text-xs uppercase tracking-widest hover:bg-gray-100 transition-colors w-fit relative z-10 whitespace-nowrap"
+                                        className="h-9 px-4 rounded-xl bg-white text-gray-900 font-bold text-[10px] uppercase tracking-widest hover:bg-gray-100 transition-colors w-fit relative z-10 whitespace-nowrap"
                                     >
                                         Add to session
                                     </button>
@@ -360,47 +342,46 @@ const StudyLabSelection = () => {
                 </div>
             </div>
 
-            {/* Floating Selection Bar */}
+            {/* Floating Selection Bar - Responsive Smart Pill */}
             <AnimatePresence>
                 {selectedModules.length > 0 && (
                     <motion.div
                         initial={{ y: 100, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: 100, opacity: 0 }}
-                        className="fixed bottom-8 left-0 right-0 z-50 flex justify-center px-6 pointer-events-none"
+                        className="fixed bottom-6 left-0 right-0 z-[100] flex justify-center px-4 pointer-events-none"
                     >
-                        <div className="bg-white/80 backdrop-blur-xl border border-gray-200 px-6 py-4 rounded-[28px] flex items-center gap-8 shadow-2xl pointer-events-auto max-w-2xl w-full">
-                            <div className="flex items-center gap-6">
+                        <div className="bg-white/90 backdrop-blur-2xl border border-gray-100 px-4 md:px-8 py-3 md:py-4 rounded-[22px] md:rounded-[28px] flex items-center justify-between shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] pointer-events-auto max-w-lg md:max-w-2xl w-full mx-auto">
+                            <div className="flex items-center gap-4 md:gap-8">
                                 <div className="flex flex-col">
-                                    <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-0.5">Session Scope</span>
-                                    <div className="flex items-baseline gap-2">
-                                        <span className="text-gray-900 text-xl font-black">{selectedModules.length}</span>
-                                        <span className="text-gray-400 text-xs font-bold uppercase tracking-wider">Modules</span>
+                                    <span className="text-gray-400 text-[9px] font-bold uppercase tracking-widest mb-0.5 hidden md:block">Session Scope</span>
+                                    <div className="flex items-baseline gap-1.5">
+                                        <span className="text-gray-900 text-lg md:text-xl font-black">{selectedModules.length}</span>
+                                        <span className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Mods</span>
                                     </div>
                                 </div>
-                                <div className="w-px h-8 bg-gray-100" />
+                                <div className="w-px h-6 md:h-8 bg-gray-100" />
                                 <div className="flex flex-col">
-                                    <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-0.5">Duration</span>
-                                    <div className="flex items-baseline gap-2">
-                                        <span className="text-gray-900 text-xl font-black">{totalDuration}</span>
-                                        <span className="text-gray-400 text-xs font-bold uppercase tracking-wider">Mins</span>
+                                    <span className="text-gray-400 text-[9px] font-bold uppercase tracking-widest mb-0.5 hidden md:block">Duration</span>
+                                    <div className="flex items-baseline gap-1.5">
+                                        <span className="text-gray-900 text-lg md:text-xl font-black">{totalDuration}</span>
+                                        <span className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Mins</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="flex-grow" />
-
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 md:gap-4">
                                 <button
                                     onClick={() => setSelectedModules([])}
-                                    className="text-gray-400 hover:text-gray-900 font-bold px-4 text-sm transition-colors"
+                                    className="text-gray-400 hover:text-gray-900 font-bold px-2 md:px-4 text-xs md:text-sm transition-colors"
                                 >
                                     Clear
                                 </button>
-                                <Link href="/study-lab/flashcards">
-                                    <button className="h-12 px-8 rounded-2xl bg-gray-900 text-white font-bold flex items-center gap-2 hover:bg-gray-800 transition-colors shadow-lg shadow-gray-900/10">
-                                        Start Session
-                                        <ArrowRight className="w-4 h-4" />
+                                <Link href={`/study-lab/flashcards?count=${flashcardCount}&modules=${selectedModules.join(",")}`}>
+                                    <button className="h-10 md:h-12 px-5 md:px-8 rounded-xl md:rounded-2xl bg-gray-900 text-white font-bold text-xs md:text-sm flex items-center gap-1.5 md:gap-2 hover:bg-gray-800 transition-colors shadow-lg shadow-gray-900/10 whitespace-nowrap">
+                                        <span className="hidden sm:inline">Start Session</span>
+                                        <span className="sm:hidden">Start</span>
+                                        <ArrowRight className="w-3.5 h-3.5" />
                                     </button>
                                 </Link>
                             </div>

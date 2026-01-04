@@ -7,13 +7,14 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const itemVariants = cva(
-    "relative flex w-full items-start gap-4 p-4",
+    "group relative flex w-full items-start gap-4 p-4 transition-all duration-200",
     {
         variants: {
             variant: {
                 default: "",
-                outline: "rounded-xl border border-gray-100 bg-white shadow-sm",
-                ghost: "hover:bg-gray-50",
+                outline: "rounded-lg border border-gray-200 bg-white shadow-sm hover:border-gray-300",
+                ghost: "hover:bg-gray-50 rounded-lg",
+                secondary: "bg-gray-50 border border-transparent rounded-lg hover:border-gray-200",
             },
             size: {
                 default: "p-4",
@@ -28,7 +29,7 @@ const itemVariants = cva(
         defaultVariants: {
             variant: "default",
             size: "default",
-            align: "center",
+            align: "start",
         },
     }
 )
@@ -57,7 +58,7 @@ const ItemHeader = React.forwardRef<
     HTMLDivElement,
     React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-    <div ref={ref} className={cn("flex flex-col space-y-1.5", className)} {...props} />
+    <div ref={ref} className={cn("flex flex-col space-y-1 my-0", className)} {...props} />
 ))
 ItemHeader.displayName = "ItemHeader"
 
@@ -67,7 +68,7 @@ const ItemMedia = React.forwardRef<
 >(({ className, ...props }, ref) => (
     <div
         ref={ref}
-        className={cn("flex shrink-0 items-center justify-center", className)}
+        className={cn("flex shrink-0 items-center justify-center pt-0.5", className)}
         {...props}
     />
 ))
@@ -77,7 +78,7 @@ const ItemContent = React.forwardRef<
     HTMLDivElement,
     React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-    <div ref={ref} className={cn("flex flex-1 flex-col gap-1", className)} {...props} />
+    <div ref={ref} className={cn("flex flex-1 flex-col gap-1 overflow-hidden", className)} {...props} />
 ))
 ItemContent.displayName = "ItemContent"
 
@@ -87,7 +88,7 @@ const ItemTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
     <h3
         ref={ref}
-        className={cn("font-bold text-gray-900 leading-none tracking-tight", className)}
+        className={cn("font-semibold text-gray-900 leading-tight tracking-tight", className)}
         {...props}
     />
 ))
@@ -99,7 +100,7 @@ const ItemDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
     <p
         ref={ref}
-        className={cn("text-sm text-gray-500", className)}
+        className={cn("text-sm text-gray-500 leading-normal", className)}
         {...props}
     />
 ))
@@ -111,7 +112,7 @@ const ItemActions = React.forwardRef<
 >(({ className, ...props }, ref) => (
     <div
         ref={ref}
-        className={cn("ml-auto flex items-center gap-2", className)}
+        className={cn("ml-auto flex shrink-0 items-center gap-2", className)}
         {...props}
     />
 ))
@@ -123,7 +124,7 @@ const ItemFooter = React.forwardRef<
 >(({ className, ...props }, ref) => (
     <div
         ref={ref}
-        className={cn("mt-auto flex items-center", className)}
+        className={cn("mt-auto flex items-center pt-2", className)}
         {...props}
     />
 ))

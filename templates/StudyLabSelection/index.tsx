@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 
 import { Course, Module, COURSES } from "@/constants/study";
+import { useStudyStore } from "@/store/useStudyStore";
 
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
@@ -80,6 +81,8 @@ const StudyLabSelection = () => {
     const [flashcardCount, setFlashcardCount] = useState(20);
     const [searchQuery, setSearchQuery] = useState("");
     const [activeCourseId, setActiveCourseId] = useState<string | null>(COURSES[0].id);
+
+    const lastSession = useStudyStore(state => state.lastSession);
 
     // --- Logic ---
 
@@ -323,17 +326,23 @@ const StudyLabSelection = () => {
                                     <div className="flex flex-col gap-3">
                                         <div className="flex items-center gap-2">
                                             <GeminiIcon className="w-5 h-5" />
-                                            <h3 className="font-bold text-base font-sans">AI Recommended</h3>
+                                            <h3 className="font-bold text-base font-sans">
+                                                {lastSession ? "Last Session Performance" : "AI Recommended"}
+                                            </h3>
                                         </div>
                                         <p className="text-[13px] text-gray-400 leading-relaxed font-sans font-medium max-w-[600px] min-h-[40px]">
-                                            <TypingText text="We suggest starting with Neural Networks. This topic has been highlighted as a key area for your current learning path." />
+                                            {lastSession ? (
+                                                <TypingText text={`You mastered ${Math.round((lastSession.knownCount / lastSession.totalCards) * 100)}% of the cards. ${lastSession.aiInsight}`} />
+                                            ) : (
+                                                <TypingText text="We suggest starting with Neural Networks. This topic has been highlighted as a key area for your current learning path." />
+                                            )}
                                         </p>
                                     </div>
                                     <button
-                                        onClick={() => toggleModule("mod-3")}
+                                        onClick={() => toggleModule(lastSession ? "mod-1" : "mod-3")}
                                         className="h-9 px-4 rounded-xl bg-white text-gray-900 font-bold text-[10px] uppercase tracking-widest hover:bg-gray-100 transition-colors w-fit relative z-10 whitespace-nowrap"
                                     >
-                                        Add to session
+                                        {lastSession ? "Practice Again" : "Add to session"}
                                     </button>
                                 </div>
                             </div>

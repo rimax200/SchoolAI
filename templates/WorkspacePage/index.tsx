@@ -7,8 +7,13 @@ import {
     ChevronDown,
     Layers,
     Share2,
+    RotateCcw,
+    Sparkles,
+    TrendingUp
 } from "lucide-react";
 import Image from "@/components/Image";
+import { useStudyStore } from "@/store/useStudyStore";
+import { cn } from "@/lib/utils";
 
 const categories = [
     { id: "all", name: "All Assets" },
@@ -160,6 +165,7 @@ const workspaceData = [
 
 const WorkspacePage = () => {
     const [activeTab, setActiveTab] = useState("all");
+    const lastSession = useStudyStore(state => state.lastSession);
 
     const filteredData = workspaceData.map(section => ({
         ...section,
@@ -230,6 +236,70 @@ const WorkspacePage = () => {
 
                     {/* Content Sections */}
                     <div className="flex flex-col gap-10 mt-4">
+
+                        {/* Recent AI Performance Summary (Conditional) */}
+                        {lastSession && (
+                            <div className="flex flex-col gap-5">
+                                <div className="flex items-center justify-between border-b border-gray-50 pb-2">
+                                    <h2 className="text-[20px] font-medium text-[#383838] font-sans flex items-center gap-2">
+                                        Recent Performance
+                                        <div className="px-2 py-0.5 bg-green-50 text-green-600 text-[10px] font-bold uppercase rounded-md border border-green-100">
+                                            New Insight
+                                        </div>
+                                    </h2>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    {/* Score Card */}
+                                    <div className="p-6 bg-white border border-gray-100 rounded-2xl shadow-sm flex flex-col gap-4">
+                                        <div className="flex items-center justify-between">
+                                            <div className="w-10 h-10 rounded-xl bg-primary-0 flex items-center justify-center">
+                                                <TrendingUp className="w-5 h-5 text-primary-200" />
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Mastery Score</div>
+                                                <div className="text-2xl font-black text-gray-900">{Math.round((lastSession.knownCount / lastSession.totalCards) * 100)}%</div>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between text-xs font-medium">
+                                                <span className="text-gray-500">{lastSession.knownCount} Retained</span>
+                                                <span className="text-gray-400">{lastSession.totalCards} Total</span>
+                                            </div>
+                                            <div className="h-1.5 bg-gray-50 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-primary-200"
+                                                    style={{ width: `${(lastSession.knownCount / lastSession.totalCards) * 100}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* AI Insight Card */}
+                                    <div className="md:col-span-2 bg-gray-900 rounded-2xl p-6 relative overflow-hidden flex flex-col justify-center shadow-xl shadow-gray-900/10">
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary-200/10 blur-3xl rounded-full -mr-16 -mt-16" />
+                                        <div className="relative z-10 flex flex-col gap-3">
+                                            <div className="flex items-center gap-2">
+                                                <img src="/icons/gemini.png" alt="Gemini" className="w-4 h-4 object-contain" />
+                                                <span className="text-[10px] font-bold text-white uppercase tracking-widest opacity-60 flex items-center gap-1.5">
+                                                    AI Performance Reflection
+                                                </span>
+                                            </div>
+                                            <p className="text-sm text-gray-300 leading-relaxed font-sans font-medium line-clamp-3">
+                                                {lastSession.aiInsight}
+                                            </p>
+                                            <div className="flex items-center gap-4 mt-2">
+                                                <button className="text-[11px] font-bold text-white hover:text-primary-100 transition-colors flex items-center gap-1.5">
+                                                    <RotateCcw className="w-3.5 h-3.5" />
+                                                    Re-trace struggles
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {filteredData.map((section) => (
                             <div key={section.category} className="flex flex-col gap-5">
                                 <div className="flex items-center justify-between border-b border-gray-50 pb-2">

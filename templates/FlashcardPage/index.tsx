@@ -19,7 +19,8 @@ import {
     Loader2,
     AlertCircle
 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useStudyStore } from "@/store/useStudyStore";
 
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,39 @@ const flashcards = [
     }
 ];
 
+const TypingText = ({ text, delay = 0.02 }: { text: string, delay?: number }) => {
+    const [displayedText, setDisplayedText] = useState("");
+    const [isComplete, setIsComplete] = useState(false);
+
+    useEffect(() => {
+        setDisplayedText("");
+        setIsComplete(false);
+        let i = 0;
+        const timer = setInterval(() => {
+            setDisplayedText(text.slice(0, i));
+            i++;
+            if (i > text.length) {
+                clearInterval(timer);
+                setIsComplete(true);
+            }
+        }, delay * 1000);
+        return () => clearInterval(timer);
+    }, [text, delay]);
+
+    return (
+        <span className="relative">
+            {displayedText}
+            {!isComplete && (
+                <motion.span
+                    animate={{ opacity: [1, 0, 1] }}
+                    transition={{ duration: 0.8, repeat: Infinity, times: [0, 0.5, 1] }}
+                    className="inline-block w-[2px] h-[14px] bg-white ml-0.5 align-middle"
+                />
+            )}
+        </span>
+    );
+};
+
 const FlashcardPage = () => {
     const searchParams = useSearchParams();
     const countParam = parseInt(searchParams.get("count") || "10");
@@ -61,6 +95,15 @@ const FlashcardPage = () => {
     const [cards, setCards] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    // Completion State
+    const [showCompletionModal, setShowCompletionModal] = useState(false);
+    const [isGeneratingInsight, setIsGeneratingInsight] = useState(false);
+    const [hardTopics, setHardTopics] = useState<string[]>([]);
+    const [finalInsight, setFinalInsight] = useState("");
+
+    const setLastSession = useStudyStore(state => state.setLastSession);
+    const router = useRouter();
 
     const currentCard = cards[currentIndex];
     const progressValue = cards.length > 0 ? ((currentIndex + 1) / cards.length) * 100 : 0;
@@ -86,15 +129,80 @@ const FlashcardPage = () => {
         }
     }, [currentIndex]);
 
+    const generateFinalInsight = async (known: number, unknown: number, hTopics: string[]) => {
+        setIsGeneratingInsight(true);
+        try {
+            const API_KEY = process.env.NEXT_PUBLIC_GROQ_API_KEY || "";
+            const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${API_KEY}`,
+                },
+                body: JSON.stringify({
+                    messages: [
+                        {
+                            role: "system",
+                            content: `Analyze a student's flashcard session. 
+                            Stats: ${known} Easy, ${unknown} Hard. 
+                            Modules: ${moduleIds.join(", ")}.
+                            Specific Hard Questions: ${hTopics.slice(0, 5).join(" | ")}.
+                            
+                            Provide an EXTREMELY concise (max 18 words) fluid sentence. 
+                            NO labels like "Feedback:", NO colons, NO "Main topic:". 
+                            Just a smooth coaching sentence that mentions a key topic to review or celebrates success.
+                            Example: "Solid work; just spend a little more time refining your understanding of neural network architecture."`
+                        }
+                    ],
+                    model: "llama-3.1-8b-instant",
+                    temperature: 0.7,
+                }),
+            });
+            const data = await response.json();
+            const insight = data.choices[0].message.content.trim().replace(/^["']|["']$/g, '');
+            setFinalInsight(insight);
+
+            // Save to store
+            setLastSession({
+                totalCards: cards.length,
+                knownCount: known,
+                unknownCount: unknown,
+                hardTopics: hTopics,
+                aiInsight: insight,
+                timestamp: Date.now()
+            });
+        } catch (err) {
+            console.error("Insight Error:", err);
+            setFinalInsight("Great session! Keep practicing those tricky concepts.");
+        } finally {
+            setIsGeneratingInsight(false);
+        }
+    };
+
     const markKnown = useCallback(() => {
-        setKnownCount(prev => prev + 1);
-        nextCard();
-    }, [nextCard]);
+        const nextKnown = knownCount + 1;
+        setKnownCount(nextKnown);
+        if (currentIndex === cards.length - 1) {
+            setShowCompletionModal(true);
+            generateFinalInsight(nextKnown, unknownCount, hardTopics);
+        } else {
+            nextCard();
+        }
+    }, [nextCard, currentIndex, cards.length, knownCount, unknownCount, hardTopics]);
 
     const markUnknown = useCallback(() => {
-        setUnknownCount(prev => prev + 1);
-        nextCard();
-    }, [nextCard]);
+        const nextUnknown = unknownCount + 1;
+        setUnknownCount(nextUnknown);
+        const newHardTopics = [...hardTopics, cards[currentIndex]?.question];
+        setHardTopics(newHardTopics);
+
+        if (currentIndex === cards.length - 1) {
+            setShowCompletionModal(true);
+            generateFinalInsight(knownCount, nextUnknown, newHardTopics);
+        } else {
+            nextCard();
+        }
+    }, [nextCard, currentIndex, cards.length, knownCount, unknownCount, hardTopics, cards]);
 
     // AI Generation Logic
     useEffect(() => {
@@ -194,7 +302,8 @@ const FlashcardPage = () => {
                             <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center border border-gray-100">
                                 <ArrowLeft className="w-4 h-4" />
                             </div>
-                            Back to Library
+                            <span className="max-md:hidden">Back to Library</span>
+                            <span className="hidden max-md:block">Back</span>
                         </Link>
 
                         <div className="flex items-center gap-3">
@@ -238,7 +347,7 @@ const FlashcardPage = () => {
                 {isLoading ? (
                     <div className="h-[380px] md:h-[420px] bg-gray-50 border border-gray-100 rounded-2xl flex flex-col items-center justify-center gap-4 mb-8">
                         <Loader2 className="w-8 h-8 text-primary-200 animate-spin" />
-                        <p className="text-sm font-medium text-gray-500 animate-pulse">AI is generating your study session...</p>
+                        <p className="text-sm font-medium text-gray-500 animate-pulse px-6 text-center">AI is generating your study session...</p>
                     </div>
                 ) : error ? (
                     <div className="h-[380px] md:h-[420px] bg-red-50 border border-red-100 rounded-2xl flex flex-col items-center justify-center gap-4 mb-8 px-10 text-center">
@@ -254,13 +363,14 @@ const FlashcardPage = () => {
                             <motion.div
                                 className="w-full h-full relative preserve-3d transition-all duration-700"
                                 animate={{ rotateY: isFlipped ? 180 : 0 }}
+                                transition={{ type: "spring", stiffness: 260, damping: 20 }}
                             >
                                 {/* Front Side */}
                                 <div className="absolute inset-0 backface-hidden bg-white border border-gray-100 rounded-2xl p-6 md:p-10 flex flex-col items-center justify-center text-center shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-lg hover:border-gray-200 transition-all">
                                     <div className="absolute top-6 px-3 py-1 bg-gray-50 rounded-md text-[10px] font-bold tracking-widest text-gray-400 uppercase border border-gray-100">
                                         Question
                                     </div>
-                                    <h2 className="text-xl md:text-2xl font-medium text-gray-900 leading-relaxed max-w-xl font-sans">
+                                    <h2 className="text-lg md:text-2xl font-medium text-gray-900 leading-relaxed max-w-xl font-sans px-2">
                                         {currentCard?.question}
                                     </h2>
                                     <button
@@ -282,7 +392,7 @@ const FlashcardPage = () => {
                                     <div className="absolute top-6 px-3 py-1 bg-white/10 rounded-md text-[10px] font-bold tracking-widest text-white/60 uppercase border border-white/5">
                                         Verified Answer
                                     </div>
-                                    <p className="text-lg md:text-xl font-medium text-white leading-relaxed max-w-xl font-sans">
+                                    <p className="text-base md:text-xl font-medium text-white leading-relaxed max-w-xl font-sans px-2">
                                         {currentCard?.answer}
                                     </p>
                                 </div>
@@ -291,7 +401,7 @@ const FlashcardPage = () => {
 
                         {/* Controls */}
                         <div className="flex flex-col items-center gap-8">
-                            <div className="flex items-center gap-4 md:gap-6">
+                            <div className="flex items-center gap-3 md:gap-6">
                                 <button
                                     onClick={(e) => { e.stopPropagation(); prevCard(); }}
                                     disabled={currentIndex === 0}
@@ -300,10 +410,10 @@ const FlashcardPage = () => {
                                     <ChevronLeft className="w-5 h-5" />
                                 </button>
 
-                                <div className="flex items-center gap-3 p-1.5 bg-gray-50 border border-gray-100 rounded-xl">
+                                <div className="flex items-center gap-2 md:gap-3 p-1.5 bg-gray-50 border border-gray-100 rounded-xl">
                                     <button
                                         onClick={(e) => { e.stopPropagation(); markUnknown(); }}
-                                        className="h-10 px-6 hover:bg-white text-gray-500 hover:text-red-600 hover:shadow-sm rounded-lg font-bold transition-all flex items-center gap-2 text-sm"
+                                        className="h-10 px-4 md:px-6 hover:bg-white text-gray-500 hover:text-red-600 hover:shadow-sm rounded-lg font-bold transition-all flex items-center gap-2 text-sm"
                                     >
                                         <X className="w-4 h-4" />
                                         <span className="max-md:hidden">Hard</span>
@@ -311,15 +421,15 @@ const FlashcardPage = () => {
 
                                     <button
                                         onClick={(e) => { e.stopPropagation(); handleFlip(); }}
-                                        className="h-10 px-8 bg-gray-900 text-white rounded-lg font-bold hover:bg-gray-800 transition-all flex items-center gap-2 text-sm shadow-md shadow-gray-900/10"
+                                        className="h-10 px-6 md:px-8 bg-gray-900 text-white rounded-lg font-bold hover:bg-gray-800 transition-all flex items-center gap-2 text-sm shadow-md shadow-gray-900/10"
                                     >
                                         <RotateCcw className="w-4 h-4" />
-                                        {isFlipped ? "Return" : "Reveal"}
+                                        <span className="max-md:hidden">{isFlipped ? "Return" : "Reveal"}</span>
                                     </button>
 
                                     <button
                                         onClick={(e) => { e.stopPropagation(); markKnown(); }}
-                                        className="h-10 px-6 hover:bg-white text-gray-500 hover:text-green-600 hover:shadow-sm rounded-lg font-bold transition-all flex items-center gap-2 text-sm"
+                                        className="h-10 px-4 md:px-6 hover:bg-white text-gray-500 hover:text-green-600 hover:shadow-sm rounded-lg font-bold transition-all flex items-center gap-2 text-sm"
                                     >
                                         <Check className="w-4 h-4" />
                                         <span className="max-md:hidden">Easy</span>
@@ -357,6 +467,82 @@ const FlashcardPage = () => {
                     </div>
                 )}
             </div>
+
+            {/* Completion Modal */}
+            <AnimatePresence>
+                {showCompletionModal && (
+                    <div className="fixed inset-0 z-[999] flex items-center justify-center px-4 overflow-hidden pointer-events-auto">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
+                            onClick={() => { }}
+                        />
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            className="relative bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl border border-gray-100 z-10"
+                        >
+                            <div className="flex flex-col items-center text-center gap-6">
+                                <div className="w-16 h-16 rounded-2xl bg-gray-900 flex items-center justify-center shadow-xl shadow-gray-900/20">
+                                    <Check className="w-8 h-8 text-white" strokeWidth={3} />
+                                </div>
+                                <div className="space-y-2">
+                                    <h2 className="text-2xl font-bold text-gray-900 font-sans">Session Complete!</h2>
+                                    <p className="text-gray-500 text-sm font-sans">You've finished all cards in this set.</p>
+                                </div>
+
+                                <div className="w-full grid grid-cols-2 gap-4">
+                                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Mastered</div>
+                                        <div className="text-xl font-bold text-gray-900">{knownCount}</div>
+                                    </div>
+                                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Struggled</div>
+                                        <div className="text-xl font-bold text-gray-900">{unknownCount}</div>
+                                    </div>
+                                </div>
+
+                                <div className="w-full p-5 bg-gray-900 rounded-2xl relative overflow-hidden min-h-[100px] flex items-center">
+                                    <div className="relative z-10 flex flex-col items-start text-left gap-3 w-full">
+                                        <div className="flex items-center gap-2">
+                                            <img src="/icons/gemini.png" alt="AI" className="w-4 h-4 object-contain" />
+                                            <span className="text-[10px] font-bold text-white uppercase tracking-widest opacity-60">AI Insight</span>
+                                        </div>
+                                        {isGeneratingInsight ? (
+                                            <div className="flex items-center gap-2 text-white/40 italic text-xs">
+                                                <Loader2 className="w-3 h-3 animate-spin" />
+                                                Analyzing performance...
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-white leading-relaxed font-sans font-medium">
+                                                {finalInsight && <TypingText text={finalInsight} />}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="w-full flex flex-col gap-3 mt-2">
+                                    <button
+                                        onClick={() => window.location.reload()}
+                                        className="w-full h-12 bg-gray-900 text-white rounded-xl font-bold text-sm shadow-lg shadow-gray-900/10 hover:bg-gray-800 transition-all font-sans"
+                                    >
+                                        Start Again
+                                    </button>
+                                    <button
+                                        onClick={() => router.push("/study-lab")}
+                                        className="w-full h-12 bg-white text-gray-500 border border-gray-100 rounded-xl font-bold text-sm hover:bg-gray-50 transition-all font-sans"
+                                    >
+                                        Finish Session
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             <style jsx global>{`
                 .perspective-1000 {

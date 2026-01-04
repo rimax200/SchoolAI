@@ -49,6 +49,9 @@ interface Course {
     description?: string;
 }
 
+// --- Icons ---
+
+
 // --- Mock Data ---
 
 const COURSES: Course[] = [
@@ -333,11 +336,11 @@ const StudyLabSelection = () => {
                                 </Popover>
                             </div>
 
-                            <div className="bg-gray-900 text-white p-8 rounded-3xl relative overflow-hidden flex flex-col justify-between min-h-[160px] shadow-2xl shadow-gray-900/20 md:col-span-2">
-                                <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                            <div className="bg-gray-900 text-white p-6 rounded-xl relative overflow-hidden flex flex-col items-center shadow-2xl shadow-gray-900/20 md:col-span-2">
+                                <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between w-full">
                                     <div className="flex flex-col gap-3">
                                         <div className="flex items-center gap-2">
-                                            <Sparkles className="w-4 h-4 text-primary-50" />
+                                            <img src="/icons/gemini.png" alt="Gemini" className="w-5 h-5 object-contain" />
                                             <h3 className="font-bold text-lg font-sans">AI Recommended</h3>
                                         </div>
                                         <p className="text-sm text-gray-400 leading-relaxed font-sans font-medium max-w-[600px]">

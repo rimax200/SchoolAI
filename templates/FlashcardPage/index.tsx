@@ -144,7 +144,7 @@ const FlashcardPage = () => {
 
                         {/* Back Side */}
                         <div
-                            className="absolute inset-0 backface-hidden bg-primary-200 border border-primary-300 rounded-[32px] p-12 shadow-xl shadow-primary-200/20 flex flex-col items-center justify-center text-center rotate-y-180"
+                            className="absolute inset-0 backface-hidden bg-gray-800 border border-gray-700 rounded-[32px] p-12 shadow-xl shadow-gray-900/20 flex flex-col items-center justify-center text-center rotate-y-180"
                         >
                             <div className="absolute top-8 px-4 py-1.5 bg-white/10 rounded-full text-[10px] font-black tracking-widest text-white/50 uppercase">
                                 Answer

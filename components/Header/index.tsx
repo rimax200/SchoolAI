@@ -204,7 +204,7 @@ const Header = ({ chatId, onOpenSidebar }: Props) => {
 
             <div className="flex items-center gap-4 ml-auto max-md:order-3">
                 <Link
-                    href="/profile"
+                    href="/tracker"
                     className="flex items-center gap-2 h-10 pl-1 pr-3 border border-gray-100 rounded-full hover:bg-gray-25 transition-colors max-md:pr-1"
                 >
                     <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-50">

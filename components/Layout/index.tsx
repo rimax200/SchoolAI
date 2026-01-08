@@ -14,6 +14,7 @@ type Props = {
     onScroll?: (e: React.UIEvent<HTMLDivElement>) => void;
     showScrollButton?: boolean;
     scrollToBottom?: () => void;
+    fullWidth?: boolean;
 };
 
 const Layout = ({
@@ -26,6 +27,7 @@ const Layout = ({
     onScroll,
     showScrollButton,
     scrollToBottom,
+    fullWidth,
 }: Props) => {
     const [sidebarCollapse, setSidebarCollapse] = useState(false);
     const [sidebarVisible, setSidebarVisible] = useState(false);
@@ -50,7 +52,7 @@ const Layout = ({
                     onScroll={onScroll}
                     className="flex-1 w-full overflow-y-auto overflow-x-hidden scrollbar-none scroll-smooth flex flex-col relative"
                 >
-                    <div className={`w-full max-w-[1000px] px-4 md:pl-6 md:pr-4 py-5 md:py-7 flex-1 ${classWrapper || ""}`}>
+                    <div className={fullWidth ? `w-full flex-1 ${classWrapper || ""}` : `w-full max-w-[1000px] mx-auto px-4 md:px-6 py-5 md:py-7 flex-1 ${classWrapper || ""}`}>
                         {children}
                     </div>
 
@@ -75,7 +77,7 @@ const Layout = ({
 
                 {!hidePanelMessage && (
                     <div className="absolute bottom-0 left-0 right-0 w-full flex pb-8 md:pb-12 bg-linear-to-t from-white via-white to-transparent pt-16 z-[40] pointer-events-none">
-                        <div className="w-full max-w-[1000px] px-4 md:pl-6 md:pr-4 flex flex-col gap-3 pointer-events-auto">
+                        <div className="w-full max-w-[1000px] mx-auto px-4 md:px-6 flex flex-col gap-3 pointer-events-auto">
                             <PanelMessage />
                             <div className="text-[11px] text-gray-400 text-center px-4 font-medium mb-1">
                                 School AI can make mistakes. Consider checking important information.

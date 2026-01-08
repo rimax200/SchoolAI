@@ -1,5 +1,5 @@
-import HomePage from "@/templates/HomePage";
+import NewHome from "@/templates/NewHome";
 
 export default function Page() {
-  return <HomePage />;
+  return <NewHome />;
 }

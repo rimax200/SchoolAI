@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Home, Search, BarChart2, BookOpen, Files } from "lucide-react";
+import { Home, Search, BarChart2, BookOpen, Files, Sparkles, MessageSquare } from "lucide-react";
 import Modal from "@/components/Modal";
 import SearchModal from "../SearchModal";
 import NavLink from "./NavLink";
@@ -25,6 +25,11 @@ const Menu = ({ isCollapsed }: Props) => {
             href: "/",
         },
         {
+            title: "Assistant",
+            icon: MessageSquare,
+            href: "/assistant",
+        },
+        {
             title: "Search",
             icon: Search,
             href: "/search",
@@ -33,6 +38,11 @@ const Menu = ({ isCollapsed }: Props) => {
             title: "Study Tracker",
             icon: BarChart2,
             href: "/tracker",
+        },
+        {
+            title: "Exam Prep",
+            icon: Sparkles,
+            href: "/external-exam",
         },
         {
             title: "The Library",

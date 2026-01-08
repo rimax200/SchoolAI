@@ -22,7 +22,7 @@ const mentorItems = [
         title: "Exam Prep",
         description: "Quiz yourself and get a breakdown of your strengths and study gaps.",
         image: "/images/mentors/mentor-3.png",
-        href: "/chat",
+        href: "/exam-prep",
     },
 ];
 
